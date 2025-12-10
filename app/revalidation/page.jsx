@@ -56,9 +56,18 @@ export default async function Page() {
 }
 
 async function RandomWikiArticle() {
-    const randomWiki = await fetch(randomWikiUrl, {
-        next: { revalidate: revalidateTTL, tags: [tagName] }
-    });
+    let randomWiki;
+    try {
+        randomWiki = await fetch(randomWikiUrl, {
+            next: { revalidate: revalidateTTL, tags: [tagName] }
+        });
+    } catch {
+        return (
+            <Card className="max-w-2xl">
+                <p className="text-red-600">Failed to fetch Wikipedia article. Please try again later.</p>
+            </Card>
+        );
+    }
 
     if (!randomWiki.ok) {
         return (
@@ -69,17 +78,17 @@ async function RandomWikiArticle() {
     }
 
     const content = await randomWiki.json();
-    let extract = content.extract;
+    let extract = content?.extract ?? '';
     if (extract.length > maxExtractLength) {
         extract = extract.slice(0, extract.slice(0, maxExtractLength).lastIndexOf(' ')) + ' [...]';
     }
 
     return (
         <Card className="max-w-2xl">
-            <h3 className="text-2xl text-neutral-900">{content.title}</h3>
-            <div className="text-lg font-bold">{content.description}</div>
+            <h3 className="text-2xl text-neutral-900">{content?.title}</h3>
+            <div className="text-lg font-bold">{content?.description}</div>
             <p className="italic">{extract}</p>
-            <a target="_blank" rel="noopener noreferrer" href={content.content_urls.desktop.page}>
+            <a target="_blank" rel="noopener noreferrer" href={content?.content_urls?.desktop?.page}>
                 From Wikipedia
             </a>
         </Card>
